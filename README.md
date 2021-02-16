@@ -10,7 +10,7 @@
 ## Aeronautical Accidents in Brazil <img src=https://www.noticiaslatamsales.com/files/cache/604c78cf3223d5957b2fed28a7281742_f31.png width=80> <img src=https://static.todamateria.com.br/upload/ba/nd/bandeira-do-brasil-og.jpg width=60>
 
 In this project I plotted a map with all the aeronautical incidents and accidents that happened in Brazil from 2008 to 2018.
-They dataset was provided by the brazilian ***Centre of Investigation and Prevention of Aeronautical Accidents (CENIPA)***.
+The dataset was provided by the brazilian ***Centre of Investigation and Prevention of Aeronautical Accidents (CENIPA)***.
 
 In order to use this project, your streamlit needs to be downgraded to version 0.69, because if you use the most recent one you won't be able to move around your map.
 
