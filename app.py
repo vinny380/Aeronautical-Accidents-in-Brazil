@@ -1,6 +1,9 @@
+# Importing modules
 import streamlit as st
 import pandas as pd
+import pydeck as pdk
 
+# dataset url
 DATA_URL = "https://raw.githubusercontent.com/carlosfab/curso_data_science_na_pratica/master/modulo_02/ocorrencias_aviacao.csv"
 
 @st.cache
@@ -68,4 +71,43 @@ sub = st.markdown('ℹ️ The occurrences shown below are classified as **{}** f
 
 # MAP
 st.subheader('**Map of Occurrences**')
-st.map(df_filtered) # Shows our map with filtered data
+st.pydeck_chart(pdk.Deck(
+    map_style='mapbox://styles/mapbox/dark-v10',
+    initial_view_state=pdk.ViewState(
+        latitude=-12.979082,
+        longitude=-54.7514481,
+        zoom=3,
+        pitch=50,
+    ),
+    layers=[
+        pdk.Layer(
+            'HeatmapLayer',
+            data=df_filtered,
+            opacity=2,
+            radius=30000,
+            get_position='[longitude, latitude]',
+            auto_highlight=True,
+            threshold=1,
+            pickable=True,
+            extruded=True,
+        ),
+        pdk.Layer(
+            'GridLayer',
+            data=df_filtered,
+            get_position='[longitude, latitude]',
+            get_radius=68800,
+            pickable=True,
+            extruded=True,
+            cell_size=40000,
+            elevation_scale=1500,
+        ),
+    ]
+))
+
+# BACKGROUND
+#st.markdown("""
+   # <style>
+   # .reportview-container{
+ #       background: url("https://monroeaerospace.com/blog/wp-content/uploads/2019/08/airplane-landing-lights-874x452.jpg")
+ #       }
+#""", unsafe_allow_html=True,)
