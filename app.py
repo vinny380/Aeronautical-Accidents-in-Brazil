@@ -1,88 +1,71 @@
-import pandas as pd
 import streamlit as st
+import pandas as pd
 
 DATA_URL = "https://raw.githubusercontent.com/carlosfab/curso_data_science_na_pratica/master/modulo_02/ocorrencias_aviacao.csv"
 
 @st.cache
-
+# This function will load our data
 def load_data():
-    """
-        Carrega os dados de ocorrências aeronáuticas do CENIPA.
-
-        :return: DataFrame com colunas selecionadas.
-    """
-
+    # Dict for changing the column labels
     columns = {
-        'ocorrencia_latitude': 'latitude',
-        'ocorrencia_longitude': 'longitude',
-        'ocorrencia_dia': 'data',
         'ocorrencia_classificacao': 'classificacao',
         'ocorrencia_tipo': 'tipo',
         'ocorrencia_tipo_categoria': 'tipo_categoria',
-        'ocorrencia_tipo_icao': 'tipo_icao',
-        'ocorrencia_aerodromo': 'aerodromo',
+        'ocorrencia_tipo_icao': 'icao',
+        'ocorrencia_latitude': 'latitude',
+        "ocorrencia_longitude": 'longitude',
         'ocorrencia_cidade': 'cidade',
-        'investigacao_status': 'status',
-        'divulgacao_relatorio_numero': 'relatorio_numero',
-        'total_aeronaves_envolvidas': 'aeronaves_envolvidas'
+        'ocorrencia_uf': 'estado',
+        'ocorrencia_pais': 'pais',
+        'ocorrencia_aerodromo': 'aerodromo',
+        'ocorrencia_dia': 'dia',
+        'ocorrencia_horario': 'horario',
     }
+    df = pd.read_csv(DATA_URL, index_col='codigo_ocorrencia') # opening our dataset
+    df.rename(columns=columns, inplace=True) # changing the name by using our dict
+    df.dia = df.dia + ' ' + df.horario # merging the date and time labels
+    df.dia = pd.to_datetime(df.dia) # casting the date + time label to_datetime()
+    df = df[list(columns.values())] # listing our labels
+    return df # returning our df
 
-    df = pd.read_csv(DATA_URL, index_col='codigo_ocorrencia')
-    df.rename(columns=columns, inplace=True)
-    date = df.data
-    df.data = date + ' ' + df.ocorrencia_horario
-    df['data'] = pd.to_datetime(df.data)
-    df = df[list(columns.values())]
-    return df
+# Loading the data
+df = load_data() # loading our dataset
+labels = list(df.classificacao.unique()) # getting the values inside classificacao
 
-#load data
-df = load_data()
-labels = df.classificacao.unique().tolist()
+# Side bar
+st.sidebar.header('Parameters') # Sidebar title
+amount_data_shown = st.sidebar.empty() # placeholder for later
 
-# SIDEBAR
-# Parameters and number of occurrences
-st.sidebar.header('Parameters')
-info_sidebar = st.sidebar.empty() # placeholder for later
+st.sidebar.subheader('Year') # Sidebar subheader
+year_to_filter = st.sidebar.slider('Select the desired year:', 2008, 2018, 2017) # Slider bar
 
-# Slider for year selection
-st.sidebar.subheader('Year')
-year_to_filter = st.sidebar.slider('Select the desired year',2008, 2018, 2017)
+st.sidebar.subheader('Table') # Subheader
+show_data = st.sidebar.checkbox('Show csv data') # Checkbox for showing our dataset as a sheet our not
 
-# Table's checkbox
-st.sidebar.subheader('Table')
-table = st.sidebar.empty() # placeholder for later, it will be used with df_filtered
-
-# Multiselection with labels
-label_to_filter = st.sidebar.multiselect(
-    label="Choose the occurrence's classification:",
+multi_select_box = st.sidebar.multiselect(  # Multiselection of classificacao values for our map
     options=labels,
-    default=["INCIDENTE", 'ACIDENTE']
+    label="Choose the occurrences's classification",
+    default=['ACIDENTE'],
 )
 
-# footer info
+df_filtered = df[(df.dia.dt.year == year_to_filter) & (df.classificacao.isin(multi_select_box))] # Filtering data
+
+amount_data_shown.info("{} selected occurrences".format(df_filtered.shape[0])) # Amount of data shown
+
 st.sidebar.markdown("""
 The database of aeronautical events is managed by the 
 ***Center for Investigation and Prevention of Aeronautical Accidents (CENIPA)***.
-""")
-
-# Filtered data will be updated in our DataFrame
-df_filtered = df[(df.data.dt.year == year_to_filter) & (df.classificacao.isin(label_to_filter))]
-
-#  The empty placeholder is filled with df_filtered
-info_sidebar.info("{} selected occurrences.".format(df_filtered.shape[0]))
+""") # Sidebar footer
 
 # MAIN
+st.title('CENIPA - Aeronautical Accidents') # Main title
 
-st.title("CENIPA - Aeronautical Accidents")
-st.markdown(f"""
-            ℹ️ The occurrences shown below are classified as **{", ".join(label_to_filter)}**
-            for the year of **{year_to_filter}**.
-            """)
-
-# raw data (table) depending on the checkbox
-if table.checkbox("Show csv data"):
+if show_data: # If our checkbox is selected, display our dataset
     st.write(df_filtered)
 
-# map
-st.subheader('Map of Occurrence')
-st.map(df_filtered)
+sub = st.markdown('ℹ️ The occurrences shown below are classified as **{}** for the year of **{}**.'
+                  .format(', '.join(multi_select_box), year_to_filter)) # Subtitle text
+
+# MAP
+st.subheader('**Map of Occurrences**')
+st.map(df_filtered) # Shows our map with filtered data
